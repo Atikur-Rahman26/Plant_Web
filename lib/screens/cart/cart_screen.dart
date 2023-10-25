@@ -1,6 +1,8 @@
 import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
 import 'package:plant/constants.dart';
+import 'package:plant/data/carts_data.dart';
+import 'package:plant/domain/carts.dart';
 import 'package:plant/screens/cart/cart_list_widgets.dart';
 import 'package:plant/screens/home/home_screen.dart';
 
@@ -13,6 +15,7 @@ class CartScreen extends StatefulWidget {
 
 class _CartScreenState extends State<CartScreen> {
   bool isAnythingInCart = false;
+  CartsData _cartsData = CartsData();
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -47,9 +50,9 @@ class _CartScreenState extends State<CartScreen> {
               for (var cartsListData in commentingList) {
                 final plantName = cartsListData['plantName'].toString();
                 final plantImage = (cartsListData['plantImage'].toString());
-                final selectedItem =
+                var selectedItem =
                     int.parse(cartsListData['currentSelectItem'].toString());
-                final price =
+                var price =
                     double.parse(cartsListData['perItemPrice'].toString());
                 final availableItem = cartsListData['availableItem'];
                 final buyerId = cartsListData['buyerId'].toString();
@@ -61,17 +64,75 @@ class _CartScreenState extends State<CartScreen> {
                 final totalItem =
                     int.parse(cartsListData['totalItem'].toString());
 
-                final cartsWidgetLists = CartListWidget(
+                var cartsWidgetLists = CartListWidget(
                     plantName: plantName,
                     plantImage: plantImage,
                     selectedItem: selectedItem,
-                    price: price,
-                    buyNowPressed: () {
-                      print(cartId);
+                    price: price * selectedItem,
+                    buyNowPressed: () async {
+                      int soldItem =
+                          await _cartsData.currentSoldItem(plantId: cartId);
+                      int availableItem =
+                          await _cartsData.availAbleTotalItem(plantId: cartId);
+
+                      bool _isClicked = await _cartsData.updateCartAndPlant(
+                          carts: Carts(
+                              buyerId: buyerId,
+                              buyerName: buyerName,
+                              cartId: cartId,
+                              plantName: plantName,
+                              plantSellerID: plantSellerID,
+                              plantSellerName: plantSellerName,
+                              perItemPrice: price,
+                              totalItem: totalItem,
+                              plantImage: plantImage,
+                              currentSelectItem: selectedItem,
+                              availableItem: availableItem),
+                          previousSold: soldItem);
+
+                      _isClicked = await _cartsData.deleteCart(
+                          username: HomeScreen.user.userName, plantId: cartId);
+                      while (_isClicked != true) {
+                        _isClicked = await _cartsData.deleteCart(
+                            username: HomeScreen.user.userName,
+                            plantId: cartId);
+                      }
                     },
-                    cancelPressed: () {},
-                    minusPressed: () {},
-                    plusPressed: () {});
+                    cancelPressed: () async {
+                      bool _isClicked = await _cartsData.deleteCart(
+                          username: HomeScreen.user.userName, plantId: cartId);
+                      while (_isClicked != true) {
+                        _isClicked = await _cartsData.deleteCart(
+                            username: HomeScreen.user.userName,
+                            plantId: cartId);
+                      }
+                    },
+                    minusPressed: () {
+                      setState(() {
+                        selectedItem = selectedItem - 1;
+                        if (selectedItem < 1) {
+                          selectedItem = 1;
+                        }
+                        _cartsData.updateSelectedCart(
+                            currentSelectItem: selectedItem, cartId: cartId);
+                      });
+                      print("${selectedItem}");
+                    },
+                    plusPressed: () async {
+                      int sold =
+                          await _cartsData.currentSoldItem(plantId: cartId);
+                      int available =
+                          await _cartsData.availAbleTotalItem(plantId: cartId);
+                      setState(() {
+                        selectedItem = selectedItem + 1;
+                        if (selectedItem > (available - sold)) {
+                          selectedItem = available - sold;
+                        }
+                        _cartsData.updateSelectedCart(
+                            currentSelectItem: selectedItem, cartId: cartId);
+                      });
+                      print("${selectedItem}");
+                    });
                 commentsWidgetList.add(cartsWidgetLists);
               }
               return ListView(
