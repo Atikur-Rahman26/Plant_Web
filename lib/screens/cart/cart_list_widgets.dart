@@ -3,14 +3,14 @@ import 'package:flutter/material.dart';
 import '../../constants.dart';
 
 class CartListWidget extends StatelessWidget {
-  final String plantName;
-  final String plantImage;
-  final int selectedItem;
-  final double price;
-  final VoidCallback buyNowPressed;
-  final VoidCallback cancelPressed;
-  final VoidCallback minusPressed;
-  final VoidCallback plusPressed;
+  String plantName;
+  String plantImage;
+  int selectedItem;
+  double price;
+  VoidCallback buyNowPressed;
+  VoidCallback cancelPressed;
+  VoidCallback minusPressed;
+  VoidCallback plusPressed;
   CartListWidget(
       {required this.plantName,
       required this.plantImage,
@@ -70,7 +70,7 @@ class CartListWidget extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: <Widget>[
                     Text(
-                      "Tk. ${price! * selectedItem!}",
+                      "Tk. $price",
                       style: cartTextStyle(size: 25),
                     ),
                     Row(
@@ -118,6 +118,8 @@ class CartListWidget extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: <Widget>[
               Container(
+                padding:
+                    EdgeInsets.only(left: 10, right: 10, top: 10, bottom: 10),
                 decoration: const BoxDecoration(
                   color: kPrimaryColor,
                   borderRadius: BorderRadius.only(
@@ -125,8 +127,8 @@ class CartListWidget extends StatelessWidget {
                     bottomLeft: Radius.circular(30),
                   ),
                 ),
-                child: TextButton(
-                  onPressed: buyNowPressed,
+                child: GestureDetector(
+                  onTap: buyNowPressed,
                   child: const Text(
                     "Buy now",
                     style: TextStyle(
@@ -137,6 +139,8 @@ class CartListWidget extends StatelessWidget {
                 ),
               ),
               Container(
+                padding:
+                    EdgeInsets.only(left: 10, right: 10, top: 5, bottom: 5),
                 decoration: const BoxDecoration(
                   color: kBackgroundRedColor,
                   borderRadius: BorderRadius.only(

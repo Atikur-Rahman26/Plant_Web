@@ -90,37 +90,41 @@ class _DetailsScreenState extends State<DetailsScreen> {
                     setState(() {
                       widget.isNote = false;
                     });
-                    bool _isAdded = await _cartsData.addInCart(
-                        carts: Carts(
-                            buyerId: HomeScreen.user.userName,
-                            buyerName: HomeScreen.user.fullName,
-                            cartId: widget.plantId,
-                            plantName: widget.plantName,
-                            plantSellerID: widget.sellerID,
-                            plantSellerName: widget.sellerName,
-                            perItemPrice: widget.price,
-                            totalItem: widget.totalPlants,
-                            plantImage: widget.plantImage,
-                            availableItem:
-                                (widget.totalPlants - widget.soldPlants),
-                            currentSelectItem: 1));
-                    while (_isAdded != true) {
-                      _isAdded = await _cartsData.addInCart(
+                    if (widget.soldPlants < widget.totalPlants) {
+                      bool _isAdded = await _cartsData.addInCart(
                           carts: Carts(
                               buyerId: HomeScreen.user.userName,
                               buyerName: HomeScreen.user.fullName,
                               cartId: widget.plantId,
                               plantName: widget.plantName,
-                              availableItem:
-                                  (widget.totalPlants - widget.soldPlants),
                               plantSellerID: widget.sellerID,
                               plantSellerName: widget.sellerName,
                               perItemPrice: widget.price,
                               totalItem: widget.totalPlants,
                               plantImage: widget.plantImage,
+                              availableItem:
+                                  (widget.totalPlants - widget.soldPlants),
                               currentSelectItem: 1));
+                      while (_isAdded != true) {
+                        _isAdded = await _cartsData.addInCart(
+                            carts: Carts(
+                                buyerId: HomeScreen.user.userName,
+                                buyerName: HomeScreen.user.fullName,
+                                cartId: widget.plantId,
+                                plantName: widget.plantName,
+                                availableItem:
+                                    (widget.totalPlants - widget.soldPlants),
+                                plantSellerID: widget.sellerID,
+                                plantSellerName: widget.sellerName,
+                                perItemPrice: widget.price,
+                                totalItem: widget.totalPlants,
+                                plantImage: widget.plantImage,
+                                currentSelectItem: 1));
+                      }
+                      Navigator.pop(context);
+                    } else {
+                      showAlertDialog(totalPlants: widget.totalPlants);
                     }
-                    Navigator.pop(context);
                   },
                   child: const Text(
                     'Buy Now',
@@ -158,5 +162,29 @@ class _DetailsScreenState extends State<DetailsScreen> {
         ),
       ),
     );
+  }
+
+  void showAlertDialog({required int totalPlants}) {
+    showDialog(
+        context: context,
+        builder: (context) {
+          return AlertDialog(
+            title: const Text(
+              "Not Availble!!!",
+              style: TextStyle(
+                  fontSize: 30,
+                  color: Colors.black,
+                  fontWeight: FontWeight.bold),
+            ),
+            content: Text(
+              "There were $totalPlants plants.But currently all of these are sold!!",
+              style: const TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 25),
+            ),
+            backgroundColor: kPrimaryColor,
+          );
+        });
   }
 }
