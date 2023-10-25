@@ -674,12 +674,10 @@ class _AddSellPostState extends State<AddSellPost> {
                     );
                     bool _isUploaded = await _plantsDataManagement
                         .uploadPlantSellPost(addSellPost);
-                    while (_isUploaded == true) {
-                      print(1);
-                      _isUploaded = await _plantsDataManagement
-                          .uploadPlantSellPost(addSellPost);
+                    if (_isUploaded) {
+                      print(addSellPost.plantID);
+                      Navigator.pop(context);
                     }
-                    Navigator.pop(context);
                   },
                   child: const Text(
                     "Upload",

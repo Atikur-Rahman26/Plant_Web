@@ -40,7 +40,9 @@ class PlantsDataManagement {
         'location': addSellPost.location,
         'sellerID': addSellPost.sellerID, // Store the image URL
       });
-      await _database.child('ownSellPosts/${addSellPost.sellerID}').set({
+      await _database
+          .child('ownSellPosts/${addSellPost.sellerID}/${addSellPost.plantID}')
+          .set({
         'plantID': addSellPost.plantID,
         'plantImage': imageUrl,
         'plantName': addSellPost.plantName,
@@ -60,28 +62,13 @@ class PlantsDataManagement {
       await _database
           .child('plants/plantsIds')
           .update({'${addSellPost.plantID}': " "});
-    } on FirebaseException catch (e) {
       firebaseOk = true;
+    } on FirebaseException catch (e) {
+      firebaseOk = false;
     }
 
     try {
       await _firestore.collection('plants').doc(addSellPost.plantID).set({
-        'plantID': addSellPost.plantID,
-        'plantImage': imageUrl,
-        'plantName': addSellPost.plantName,
-        'price': addSellPost.price,
-        'note': addSellPost.note,
-        'division': addSellPost.division, // Store the image URL
-        'district': addSellPost.district, // Store the image URL
-        'upzilla': addSellPost.upzilla,
-        'sellerName': addSellPost.sellerName,
-        'date': addSellPost.date,
-        'totalPlants': addSellPost.totalPlants,
-        'soldPlants': addSellPost.soldPlants,
-        'location': addSellPost.location,
-        'sellerID': addSellPost.sellerID, // Store the image URL
-      });
-      await _firestore.collection('plants').doc(addSellPost.sellerID).set({
         'plantID': addSellPost.plantID,
         'plantImage': imageUrl,
         'plantName': addSellPost.plantName,
