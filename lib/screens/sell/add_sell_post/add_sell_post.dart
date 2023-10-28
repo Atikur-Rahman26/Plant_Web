@@ -1,14 +1,35 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:plant/constants.dart';
 import 'package:plant/data/plants_data_managing.dart';
 import 'package:plant/domain/add_sell_post_data.dart';
 import 'package:plant/screens/home/home_screen.dart';
+import 'package:plant/screens/sell/sell_posts_util.dart';
+
+import '../../../data/own_sell_history_data.dart';
 
 class AddSellPost extends StatefulWidget {
   static const id = "AddSellPost";
+  static bool forEditing = false;
+  static String previousPhot = "some";
+  static SellPostsData sellPostsData = SellPostsData(
+      plantName: "great",
+      plantID: "seom",
+      plantImage: "some",
+      date: "some",
+      location: "some",
+      upzilla: "Raipura",
+      district: "Narsingdi",
+      division: "Dhaka",
+      price: 450,
+      note: "try",
+      soldPlants: 1,
+      totalPlants: 5,
+      sellerName: HomeScreen.user.fullName,
+      sellerID: HomeScreen.user.userName);
   const AddSellPost({super.key});
 
   @override
@@ -36,7 +57,7 @@ class _AddSellPostState extends State<AddSellPost> {
   List<String> _districtDropDownList = [];
   List<String> _upzillaDropDownList = [];
   late String _plantName;
-  late double _plantPrice;
+  double _plantPrice = -1;
   late int _plantAvailableItem;
   late String _sellerHomeAddress;
   late String _sellingID;
@@ -47,6 +68,7 @@ class _AddSellPostState extends State<AddSellPost> {
   late String _upzilla = "";
   late String _district = "";
   String _division = "";
+  String _currentImage = "";
   late int _indexDivision;
   late int _indexDistrict;
   XFile? _plantImage;
@@ -58,24 +80,7 @@ class _AddSellPostState extends State<AddSellPost> {
   bool _clickedUploadDate = false;
   bool _clickedNote = false;
   bool _uploadedImage = false;
-  EdgeInsets containerPadding = const EdgeInsets.only(
-    left: 15,
-    right: 15,
-    top: 5,
-  );
-  EdgeInsets containerMargin = const EdgeInsets.only(
-    left: 10,
-    right: 10,
-    bottom: 10,
-    top: 10,
-  );
-  BoxDecoration containerDecoration = const BoxDecoration(
-    color: kCartBackgroundColor,
-    borderRadius: BorderRadius.only(
-      topLeft: Radius.circular(30),
-      bottomRight: Radius.circular(30),
-    ),
-  );
+  bool _loading = false;
 
   PlantsDataManagement _plantsDataManagement = PlantsDataManagement();
   final ImagePicker picker = ImagePicker();
@@ -86,8 +91,37 @@ class _AddSellPostState extends State<AddSellPost> {
       if (image != null) {
         _uploadedImage = true;
         _plantImage = image;
+        _currentImage = _plantImage!.path;
       }
     });
+  }
+
+  void setValues() {
+    if (AddSellPost.forEditing == true) {
+      _plantName = _plantNameTextEditingController.text =
+          AddSellPost.sellPostsData.plantName;
+      _plantPrice = AddSellPost.sellPostsData.price;
+      _plantPriceTextEditingController.text =
+          AddSellPost.sellPostsData.price.toString();
+      _plantAvailableItemTextEditingController.text =
+          AddSellPost.sellPostsData.totalPlants.toString();
+      _plantAvailableItem = AddSellPost.sellPostsData.totalPlants;
+      _sellerHomeAddress = _sellerHomeAddressTextEditingController.text =
+          AddSellPost.sellPostsData.location;
+      _note =
+          _plantNoteTextEditingController.text = AddSellPost.sellPostsData.note;
+      _division = AddSellPost.sellPostsData.division;
+      _district = AddSellPost.sellPostsData.district;
+      _upzilla = AddSellPost.sellPostsData.upzilla;
+      _currentImage = AddSellPost.sellPostsData.plantImage;
+    }
+  }
+
+  @override
+  void initState() {
+    // TODO: implement initState
+    super.initState();
+    setValues();
   }
 
   @override
@@ -95,6 +129,10 @@ class _AddSellPostState extends State<AddSellPost> {
     return Scaffold(
       appBar: AppBar(
         backgroundColor: kPrimaryColor,
+        title: Text(
+          "${(AddSellPost.forEditing ? "Edit Sell Post" : "Add Sell Post")}",
+          style: TextStyle(color: kBackgroundColor, fontSize: 25),
+        ),
         leading: IconButton(
           onPressed: () {
             Navigator.pop(context);
@@ -105,73 +143,18 @@ class _AddSellPostState extends State<AddSellPost> {
             color: kBackgroundColor,
           ),
         ),
-        actions: [
-          IconButton(
-            onPressed: () {},
-            icon: const Icon(
-              Icons.menu,
-              size: 35,
-              color: kBackgroundColor,
-            ),
-          ),
-        ],
       ),
       body: Container(
         color: kBackgroundColor,
         padding: const EdgeInsets.all(10),
-        child: SingleChildScrollView(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: <Widget>[
-              Container(
-                padding: containerPadding,
-                margin: containerMargin,
-                decoration: containerDecoration,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: <Widget>[
-                    Text(
-                      _clickedPlantName == true ? "Plant name" : "",
-                      style: const TextStyle(color: kTextColor),
-                      textAlign: TextAlign.center,
-                    ),
-                    TextField(
-                      style: const TextStyle(
-                        color: kTextColor,
-                      ),
-                      keyboardType: TextInputType.text,
-                      controller: _plantNameTextEditingController,
-                      onChanged: (value) {
-                        _plantName = value;
-                      },
-                      decoration: InputDecoration(
-                        hintStyle: const TextStyle(
-                          color: kTextColor,
-                          fontWeight: FontWeight.w600,
-                          fontSize: 20,
-                        ),
-                        hintText:
-                            _clickedPlantName == false ? 'Plant name' : null,
-                      ),
-                      onTap: () {
-                        setState(() {
-                          _clickedPlantName = true;
-                          _clickedPlantPrice = false;
-                          _clickedPlantAvailableItem = false;
-                          _clickedSellerHomeAddress = false;
-                          _clickedUploadDate = false;
-                          _clickedNote = false;
-                        });
-                      },
-                    ),
-                  ],
-                ),
-              ),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceAround,
+        child: Stack(
+          alignment: Alignment.center,
+          children: [
+            SingleChildScrollView(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: <Widget>[
                   Container(
-                    width: MediaQuery.of(context).size.width * 0.5,
                     padding: containerPadding,
                     margin: containerMargin,
                     decoration: containerDecoration,
@@ -179,31 +162,31 @@ class _AddSellPostState extends State<AddSellPost> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: <Widget>[
                         Text(
-                          _clickedPlantPrice == true ? "Plant price" : "",
+                          _clickedPlantName == true ? "Plant name" : "",
                           style: const TextStyle(color: kTextColor),
                           textAlign: TextAlign.center,
                         ),
                         TextField(
-                          style: const TextStyle(color: kTextColor),
-                          keyboardType: TextInputType.number,
-                          controller: _plantPriceTextEditingController,
+                          style: kSellpostsTextStyle,
+                          keyboardType: TextInputType.text,
+                          controller: _plantNameTextEditingController,
                           onChanged: (value) {
-                            _plantPrice = double.parse(value);
+                            _plantName = value;
                           },
                           decoration: InputDecoration(
                             hintStyle: const TextStyle(
                               color: kTextColor,
                               fontWeight: FontWeight.w600,
-                              fontSize: 20,
+                              fontSize: 23,
                             ),
-                            hintText: _clickedPlantPrice == false
-                                ? 'Plant price'
+                            hintText: _clickedPlantName == false
+                                ? 'Plant name'
                                 : null,
                           ),
                           onTap: () {
                             setState(() {
-                              _clickedPlantName = false;
-                              _clickedPlantPrice = true;
+                              _clickedPlantName = true;
+                              _clickedPlantPrice = false;
                               _clickedPlantAvailableItem = false;
                               _clickedSellerHomeAddress = false;
                               _clickedUploadDate = false;
@@ -214,8 +197,101 @@ class _AddSellPostState extends State<AddSellPost> {
                       ],
                     ),
                   ),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceAround,
+                    children: <Widget>[
+                      Container(
+                        width: MediaQuery.of(context).size.width * 0.5,
+                        padding: containerPadding,
+                        margin: containerMargin,
+                        decoration: containerDecoration,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: <Widget>[
+                            Text(
+                              _clickedPlantPrice == true ? "Plant price" : "",
+                              style: const TextStyle(color: kTextColor),
+                              textAlign: TextAlign.center,
+                            ),
+                            TextField(
+                              style: kSellpostsTextStyle,
+                              keyboardType: TextInputType.number,
+                              controller: _plantPriceTextEditingController,
+                              onChanged: (value) {
+                                _plantPrice = double.parse(value);
+                              },
+                              decoration: InputDecoration(
+                                hintStyle: const TextStyle(
+                                  color: kTextColor,
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: 23,
+                                ),
+                                hintText: _clickedPlantPrice == false
+                                    ? 'Plant price'
+                                    : null,
+                              ),
+                              onTap: () {
+                                setState(() {
+                                  _clickedPlantName = false;
+                                  _clickedPlantPrice = true;
+                                  _clickedPlantAvailableItem = false;
+                                  _clickedSellerHomeAddress = false;
+                                  _clickedUploadDate = false;
+                                  _clickedNote = false;
+                                });
+                              },
+                            ),
+                          ],
+                        ),
+                      ),
+                      Container(
+                        width: MediaQuery.of(context).size.width * 0.3,
+                        padding: containerPadding,
+                        margin: containerMargin,
+                        decoration: containerDecoration,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: <Widget>[
+                            Text(
+                              _clickedPlantAvailableItem == true ? "Item" : "",
+                              style: kSellpostsTextStyle,
+                              textAlign: TextAlign.center,
+                            ),
+                            TextField(
+                              style: kSellpostsTextStyle,
+                              keyboardType: TextInputType.number,
+                              controller:
+                                  _plantAvailableItemTextEditingController,
+                              onChanged: (value) {
+                                _plantAvailableItem = int.parse(value);
+                              },
+                              decoration: InputDecoration(
+                                hintStyle: const TextStyle(
+                                  color: kTextColor,
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: 20,
+                                ),
+                                hintText: _clickedPlantAvailableItem == false
+                                    ? 'Item'
+                                    : null,
+                              ),
+                              onTap: () {
+                                setState(() {
+                                  _clickedPlantName = false;
+                                  _clickedPlantPrice = false;
+                                  _clickedPlantAvailableItem = true;
+                                  _clickedSellerHomeAddress = false;
+                                  _clickedUploadDate = false;
+                                  _clickedNote = false;
+                                });
+                              },
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
                   Container(
-                    width: MediaQuery.of(context).size.width * 0.3,
                     padding: containerPadding,
                     margin: containerMargin,
                     decoration: containerDecoration,
@@ -223,16 +299,18 @@ class _AddSellPostState extends State<AddSellPost> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: <Widget>[
                         Text(
-                          _clickedPlantAvailableItem == true ? "Item" : "",
-                          style: const TextStyle(color: kTextColor),
+                          _clickedSellerHomeAddress == true
+                              ? "Home address"
+                              : "",
+                          style: kSellpostsTextStyle,
                           textAlign: TextAlign.center,
                         ),
                         TextField(
-                          style: const TextStyle(color: kTextColor),
-                          keyboardType: TextInputType.number,
-                          controller: _plantAvailableItemTextEditingController,
+                          style: kSellpostsTextStyle,
+                          keyboardType: TextInputType.text,
+                          controller: _sellerHomeAddressTextEditingController,
                           onChanged: (value) {
-                            _plantAvailableItem = int.parse(value);
+                            _sellerHomeAddress = value;
                           },
                           decoration: InputDecoration(
                             hintStyle: const TextStyle(
@@ -240,16 +318,16 @@ class _AddSellPostState extends State<AddSellPost> {
                               fontWeight: FontWeight.w600,
                               fontSize: 20,
                             ),
-                            hintText: _clickedPlantAvailableItem == false
-                                ? 'Item'
+                            hintText: _clickedSellerHomeAddress == false
+                                ? 'Home address'
                                 : null,
                           ),
                           onTap: () {
                             setState(() {
                               _clickedPlantName = false;
                               _clickedPlantPrice = false;
-                              _clickedPlantAvailableItem = true;
-                              _clickedSellerHomeAddress = false;
+                              _clickedPlantAvailableItem = false;
+                              _clickedSellerHomeAddress = true;
                               _clickedUploadDate = false;
                               _clickedNote = false;
                             });
@@ -258,340 +336,17 @@ class _AddSellPostState extends State<AddSellPost> {
                       ],
                     ),
                   ),
-                ],
-              ),
-              Container(
-                padding: containerPadding,
-                margin: containerMargin,
-                decoration: containerDecoration,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: <Widget>[
-                    Text(
-                      _clickedSellerHomeAddress == true ? "Home address" : "",
-                      style: const TextStyle(color: kTextColor),
-                      textAlign: TextAlign.center,
+                  Container(
+                    padding: containerPadding,
+                    margin: containerMargin,
+                    decoration: const BoxDecoration(
+                      color: kCartBackgroundColor,
+                      borderRadius: BorderRadius.only(
+                        topLeft: Radius.circular(30),
+                        bottomRight: Radius.circular(30),
+                      ),
                     ),
-                    TextField(
-                      style: const TextStyle(
-                        color: kTextColor,
-                      ),
-                      keyboardType: TextInputType.text,
-                      controller: _sellerHomeAddressTextEditingController,
-                      onChanged: (value) {
-                        _sellerHomeAddress = value;
-                      },
-                      decoration: InputDecoration(
-                        hintStyle: const TextStyle(
-                          color: kTextColor,
-                          fontWeight: FontWeight.w600,
-                          fontSize: 20,
-                        ),
-                        hintText: _clickedSellerHomeAddress == false
-                            ? 'Home address'
-                            : null,
-                      ),
-                      onTap: () {
-                        setState(() {
-                          _clickedPlantName = false;
-                          _clickedPlantPrice = false;
-                          _clickedPlantAvailableItem = false;
-                          _clickedSellerHomeAddress = true;
-                          _clickedUploadDate = false;
-                          _clickedNote = false;
-                        });
-                      },
-                    ),
-                  ],
-                ),
-              ),
-              Container(
-                padding: containerPadding,
-                margin: containerMargin,
-                decoration: const BoxDecoration(
-                  color: kCartBackgroundColor,
-                  borderRadius: BorderRadius.only(
-                    topLeft: Radius.circular(30),
-                    bottomRight: Radius.circular(30),
-                  ),
-                ),
-                child: DropdownButton(
-                  onTap: () {
-                    setState(() {
-                      _clickedPlantName = false;
-                      _clickedPlantPrice = false;
-                      _clickedPlantAvailableItem = false;
-                      _clickedSellerHomeAddress = false;
-                      _clickedUploadDate = false;
-                      _clickedNote = false;
-                    });
-                  },
-                  // dropdownColor: kCartBackgroundColor,
-                  borderRadius: BorderRadius.circular(30),
-                  menuMaxHeight: MediaQuery.of(context).size.height * .35,
-                  hint: _division.isEmpty
-                      ? const Text('Division')
-                      : Text(
-                          _division,
-                          style: const TextStyle(
-                            color: Colors.black,
-                            fontWeight: FontWeight.normal,
-                          ),
-                        ),
-                  isExpanded: true,
-                  iconSize: 30.0,
-                  style: const TextStyle(
-                    color: Colors.black,
-                    fontSize: 25,
-                  ),
-                  items: _divisionDropDownList.map(
-                    (val) {
-                      return DropdownMenuItem<String>(
-                        value: val,
-                        child: Column(
-                          children: <Widget>[
-                            Container(
-                              color: kBackgroundColor,
-                              width: MediaQuery.of(context).size.width * .9,
-                              margin: const EdgeInsets.only(
-                                  top: 10, bottom: 5, right: 10, left: 10),
-                              child: Text(val),
-                            ),
-                            SizedBox(
-                              width: double.infinity,
-                              height: 1,
-                              child: Container(
-                                color: Colors.black,
-                              ),
-                            )
-                          ],
-                        ),
-                      );
-                    },
-                  ).toList(),
-                  onChanged: (val) {
-                    setState(
-                      () {
-                        _division = val!;
-                        _upzilla = "";
-                        _district = "";
-                        if (_division == _divisionDropDownList[0]) {
-                          _districtDropDownList = kDistrictsList[0];
-                          _indexDivision = 0;
-                        } else if (_division == _divisionDropDownList[1]) {
-                          _districtDropDownList = kDistrictsList[1];
-                          _indexDivision = 1;
-                        } else if (_division == _divisionDropDownList[2]) {
-                          _districtDropDownList = kDistrictsList[2];
-                          _indexDivision = 2;
-                        } else if (_division == _divisionDropDownList[3]) {
-                          _districtDropDownList = kDistrictsList[3];
-                          _indexDivision = 3;
-                        } else if (_division == _divisionDropDownList[4]) {
-                          _districtDropDownList = kDistrictsList[4];
-                          _indexDivision = 4;
-                        } else if (_division == _divisionDropDownList[5]) {
-                          _districtDropDownList = kDistrictsList[5];
-                          _indexDivision = 5;
-                        } else if (_division == _divisionDropDownList[6]) {
-                          _districtDropDownList = kDistrictsList[6];
-                          _indexDivision = 6;
-                        } else if (_division == _divisionDropDownList[7]) {
-                          _districtDropDownList = kDistrictsList[7];
-                          _indexDivision = 7;
-                        }
-                      },
-                    );
-                  },
-                ),
-              ),
-              Container(
-                padding: containerPadding,
-                margin: containerMargin,
-                decoration: const BoxDecoration(
-                  color: kCartBackgroundColor,
-                  borderRadius: BorderRadius.only(
-                    topLeft: Radius.circular(30),
-                    bottomRight: Radius.circular(30),
-                  ),
-                ),
-                child: DropdownButton(
-                  onTap: () {
-                    setState(() {
-                      _clickedPlantName = false;
-                      _clickedPlantPrice = false;
-                      _clickedPlantAvailableItem = false;
-                      _clickedSellerHomeAddress = false;
-                      _clickedUploadDate = false;
-                      _clickedNote = false;
-                    });
-                  },
-                  // dropdownColor: kCartBackgroundColor,
-                  borderRadius: BorderRadius.circular(30),
-                  menuMaxHeight: MediaQuery.of(context).size.height * .35,
-                  hint: _district.isEmpty
-                      ? const Text('District')
-                      : Text(
-                          _district,
-                          style: const TextStyle(
-                            color: Colors.black,
-                            fontWeight: FontWeight.normal,
-                          ),
-                        ),
-                  isExpanded: true,
-                  iconSize: 30.0,
-                  style: const TextStyle(
-                    color: Colors.black,
-                    fontSize: 25,
-                  ),
-                  items: _districtDropDownList.map(
-                    (val) {
-                      return DropdownMenuItem<String>(
-                        value: val,
-                        child: Column(
-                          children: <Widget>[
-                            Container(
-                              color: kBackgroundColor,
-                              width: MediaQuery.of(context).size.width * .9,
-                              margin: const EdgeInsets.only(
-                                  top: 10, bottom: 5, right: 10, left: 10),
-                              child: Text(val),
-                            ),
-                            SizedBox(
-                              width: double.infinity,
-                              height: 1,
-                              child: Container(
-                                color: Colors.black,
-                              ),
-                            )
-                          ],
-                        ),
-                      );
-                    },
-                  ).toList(),
-                  onChanged: (val) {
-                    setState(
-                      () {
-                        _district = val!;
-                        _upzilla = "";
-                        _indexDistrict = findingIndex(
-                            districtList: _districtDropDownList,
-                            district: _district);
-                        _upzillaDropDownList =
-                            (kUpzillaLists[_indexDivision][_indexDistrict]);
-                      },
-                    );
-                  },
-                ),
-              ),
-              Container(
-                padding: containerPadding,
-                margin: containerMargin,
-                decoration: const BoxDecoration(
-                  color: kCartBackgroundColor,
-                  borderRadius: BorderRadius.only(
-                    topLeft: Radius.circular(30),
-                    bottomRight: Radius.circular(30),
-                  ),
-                ),
-                child: DropdownButton(
-                  onTap: () {
-                    setState(() {
-                      _clickedPlantName = false;
-                      _clickedPlantPrice = false;
-                      _clickedPlantAvailableItem = false;
-                      _clickedSellerHomeAddress = false;
-                      _clickedUploadDate = false;
-                      _clickedNote = false;
-                    });
-                  },
-                  // dropdownColor: kCartBackgroundColor,
-                  borderRadius: BorderRadius.circular(30),
-                  menuMaxHeight: MediaQuery.of(context).size.height * .35,
-                  hint: _upzilla.isEmpty
-                      ? const Text('Upzilla')
-                      : Text(
-                          _upzilla,
-                          style: const TextStyle(
-                            color: Colors.black,
-                            fontWeight: FontWeight.normal,
-                          ),
-                        ),
-                  isExpanded: true,
-                  iconSize: 30.0,
-                  style: const TextStyle(
-                    color: Colors.black,
-                    fontSize: 25,
-                  ),
-                  items: _upzillaDropDownList.map(
-                    (val) {
-                      return DropdownMenuItem<String>(
-                        value: val,
-                        child: Column(
-                          children: <Widget>[
-                            Container(
-                              color: kBackgroundColor,
-                              width: MediaQuery.of(context).size.width * .9,
-                              margin: const EdgeInsets.only(
-                                  top: 10, bottom: 5, right: 10, left: 10),
-                              child: Text(val),
-                            ),
-                            SizedBox(
-                              width: double.infinity,
-                              height: 1,
-                              child: Container(
-                                color: Colors.black,
-                              ),
-                            )
-                          ],
-                        ),
-                      );
-                    },
-                  ).toList(),
-                  onChanged: (val) {
-                    setState(
-                      () {
-                        _upzilla = val!;
-                      },
-                    );
-                  },
-                ),
-              ),
-              Container(
-                padding: containerPadding,
-                margin: containerMargin,
-                decoration: const BoxDecoration(
-                  color: kCartBackgroundColor,
-                  borderRadius: BorderRadius.only(
-                    topLeft: Radius.circular(30),
-                    bottomRight: Radius.circular(30),
-                  ),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: <Widget>[
-                    Text(
-                      _clickedNote == true ? "Note" : "",
-                      style: const TextStyle(color: kTextColor),
-                      textAlign: TextAlign.center,
-                    ),
-                    TextField(
-                      style: const TextStyle(
-                        color: kTextColor,
-                      ),
-                      keyboardType: TextInputType.text,
-                      controller: _plantNoteTextEditingController,
-                      onChanged: (value) {
-                        _note = value;
-                      },
-                      decoration: InputDecoration(
-                        hintStyle: const TextStyle(
-                          color: kTextColor,
-                          fontWeight: FontWeight.w600,
-                          fontSize: 20,
-                        ),
-                        hintText: _clickedNote == false ? 'Note' : null,
-                      ),
+                    child: DropdownButton(
                       onTap: () {
                         setState(() {
                           _clickedPlantName = false;
@@ -599,97 +354,455 @@ class _AddSellPostState extends State<AddSellPost> {
                           _clickedPlantAvailableItem = false;
                           _clickedSellerHomeAddress = false;
                           _clickedUploadDate = false;
-                          _clickedNote = true;
+                          _clickedNote = false;
                         });
                       },
+                      // dropdownColor: kCartBackgroundColor,
+                      borderRadius: BorderRadius.circular(30),
+                      menuMaxHeight: MediaQuery.of(context).size.height * .35,
+                      hint: _division.isEmpty
+                          ? const Text('Division')
+                          : Text(
+                              _division,
+                              style: const TextStyle(
+                                color: Colors.black,
+                                fontWeight: FontWeight.normal,
+                              ),
+                            ),
+                      isExpanded: true,
+                      iconSize: 30.0,
+                      style: const TextStyle(
+                        color: Colors.black,
+                        fontSize: 25,
+                      ),
+                      items: _divisionDropDownList.map(
+                        (val) {
+                          return DropdownMenuItem<String>(
+                            value: val,
+                            child: Column(
+                              children: <Widget>[
+                                Container(
+                                  color: kBackgroundColor,
+                                  width: MediaQuery.of(context).size.width * .9,
+                                  margin: const EdgeInsets.only(
+                                      top: 10, bottom: 5, right: 10, left: 10),
+                                  child: Text(val),
+                                ),
+                                SizedBox(
+                                  width: double.infinity,
+                                  height: 1,
+                                  child: Container(
+                                    color: Colors.black,
+                                  ),
+                                )
+                              ],
+                            ),
+                          );
+                        },
+                      ).toList(),
+                      onChanged: (val) {
+                        setState(
+                          () {
+                            _division = val!;
+                            _upzilla = "";
+                            _district = "";
+                            if (_division == _divisionDropDownList[0]) {
+                              _districtDropDownList = kDistrictsList[0];
+                              _indexDivision = 0;
+                            } else if (_division == _divisionDropDownList[1]) {
+                              _districtDropDownList = kDistrictsList[1];
+                              _indexDivision = 1;
+                            } else if (_division == _divisionDropDownList[2]) {
+                              _districtDropDownList = kDistrictsList[2];
+                              _indexDivision = 2;
+                            } else if (_division == _divisionDropDownList[3]) {
+                              _districtDropDownList = kDistrictsList[3];
+                              _indexDivision = 3;
+                            } else if (_division == _divisionDropDownList[4]) {
+                              _districtDropDownList = kDistrictsList[4];
+                              _indexDivision = 4;
+                            } else if (_division == _divisionDropDownList[5]) {
+                              _districtDropDownList = kDistrictsList[5];
+                              _indexDivision = 5;
+                            } else if (_division == _divisionDropDownList[6]) {
+                              _districtDropDownList = kDistrictsList[6];
+                              _indexDivision = 6;
+                            } else if (_division == _divisionDropDownList[7]) {
+                              _districtDropDownList = kDistrictsList[7];
+                              _indexDivision = 7;
+                            }
+                          },
+                        );
+                      },
                     ),
-                  ],
-                ),
-              ),
-              Center(
-                child: Container(
-                    width: MediaQuery.of(context).size.width * .75,
-                    height: MediaQuery.of(context).size.width * .5,
+                  ),
+                  Container(
                     padding: containerPadding,
                     margin: containerMargin,
-                    decoration: BoxDecoration(
-                      border: Border.all(color: kTextColor),
+                    decoration: const BoxDecoration(
+                      color: kCartBackgroundColor,
+                      borderRadius: BorderRadius.only(
+                        topLeft: Radius.circular(30),
+                        bottomRight: Radius.circular(30),
+                      ),
                     ),
-                    child: _uploadedImage
-                        ? Image.file(
-                            File(_plantImage!.path),
-                            fit: BoxFit.fill,
-                          )
-                        : const FittedBox(
-                            child: Icon(
-                              Icons.photo_size_select_actual_outlined,
+                    child: DropdownButton(
+                      onTap: () {
+                        setState(() {
+                          _clickedPlantName = false;
+                          _clickedPlantPrice = false;
+                          _clickedPlantAvailableItem = false;
+                          _clickedSellerHomeAddress = false;
+                          _clickedUploadDate = false;
+                          _clickedNote = false;
+                        });
+                      },
+                      // dropdownColor: kCartBackgroundColor,
+                      borderRadius: BorderRadius.circular(30),
+                      menuMaxHeight: MediaQuery.of(context).size.height * .35,
+                      hint: _district.isEmpty
+                          ? const Text('District')
+                          : Text(
+                              _district,
+                              style: const TextStyle(
+                                color: Colors.black,
+                                fontWeight: FontWeight.normal,
+                              ),
                             ),
-                          )),
-              ),
-              Center(
-                child: SizedBox(
-                  width: MediaQuery.of(context).size.width * .75,
-                  height: 30,
-                  child: ElevatedButton(
-                    style: ButtonStyle(
-                      backgroundColor:
-                          MaterialStateProperty.all(kCartBackgroundColor),
-                    ),
-                    onPressed: () {
-                      imagePickingAlertBox();
-                    },
-                    child: const Text(
-                      "Upload image",
-                      style: TextStyle(fontSize: 20, color: kTextColor),
-                    ),
-                  ),
-                ),
-              ),
-              Center(
-                child: MaterialButton(
-                  color: kPrimaryColor,
-                  onPressed: () async {
-                    List<dynamic> tempList = getDateAndTime();
-                    int _minValue = tempList[3];
-                    _date = tempList[0];
-                    _sellingID = _plantName +
-                        HomeScreen.user.userName +
-                        _minValue.toString();
-                    _sellingID = _sellingID.replaceAll(" ", "");
-                    SellPostsData addSellPost = SellPostsData(
-                      plantName: _plantName,
-                      plantID: _sellingID,
-                      plantImage: _plantImage!.path,
-                      date: _date,
-                      location: _sellerHomeAddress,
-                      upzilla: _upzilla,
-                      district: _district,
-                      division: _division,
-                      price: _plantPrice,
-                      note: _note,
-                      soldPlants: 0,
-                      totalPlants: _plantAvailableItem,
-                      sellerName: HomeScreen.user.fullName,
-                      sellerID: HomeScreen.user.userName,
-                    );
-                    bool _isUploaded = await _plantsDataManagement
-                        .uploadPlantSellPost(addSellPost);
-                    if (_isUploaded) {
-                      print(addSellPost.plantID);
-                      Navigator.pop(context);
-                    }
-                  },
-                  child: const Text(
-                    "Upload",
-                    style: TextStyle(
-                      color: kBackgroundColor,
-                      fontSize: 30,
+                      isExpanded: true,
+                      iconSize: 30.0,
+                      style: const TextStyle(
+                        color: Colors.black,
+                        fontSize: 25,
+                      ),
+                      items: _districtDropDownList.map(
+                        (val) {
+                          return DropdownMenuItem<String>(
+                            value: val,
+                            child: Column(
+                              children: <Widget>[
+                                Container(
+                                  color: kBackgroundColor,
+                                  width: MediaQuery.of(context).size.width * .9,
+                                  margin: const EdgeInsets.only(
+                                      top: 10, bottom: 5, right: 10, left: 10),
+                                  child: Text(val),
+                                ),
+                                SizedBox(
+                                  width: double.infinity,
+                                  height: 1,
+                                  child: Container(
+                                    color: Colors.black,
+                                  ),
+                                )
+                              ],
+                            ),
+                          );
+                        },
+                      ).toList(),
+                      onChanged: (val) {
+                        setState(
+                          () {
+                            _district = val!;
+                            _upzilla = "";
+                            _indexDistrict = findingIndex(
+                                districtList: _districtDropDownList,
+                                district: _district);
+                            _upzillaDropDownList =
+                                (kUpzillaLists[_indexDivision][_indexDistrict]);
+                          },
+                        );
+                      },
                     ),
                   ),
+                  Container(
+                    padding: containerPadding,
+                    margin: containerMargin,
+                    decoration: const BoxDecoration(
+                      color: kCartBackgroundColor,
+                      borderRadius: BorderRadius.only(
+                        topLeft: Radius.circular(30),
+                        bottomRight: Radius.circular(30),
+                      ),
+                    ),
+                    child: DropdownButton(
+                      onTap: () {
+                        setState(() {
+                          _clickedPlantName = false;
+                          _clickedPlantPrice = false;
+                          _clickedPlantAvailableItem = false;
+                          _clickedSellerHomeAddress = false;
+                          _clickedUploadDate = false;
+                          _clickedNote = false;
+                        });
+                      },
+                      // dropdownColor: kCartBackgroundColor,
+                      borderRadius: BorderRadius.circular(30),
+                      menuMaxHeight: MediaQuery.of(context).size.height * .35,
+                      hint: _upzilla.isEmpty
+                          ? const Text('Upzilla')
+                          : Text(
+                              _upzilla,
+                              style: const TextStyle(
+                                color: Colors.black,
+                                fontWeight: FontWeight.normal,
+                              ),
+                            ),
+                      isExpanded: true,
+                      iconSize: 30.0,
+                      style: const TextStyle(
+                        color: Colors.black,
+                        fontSize: 25,
+                      ),
+                      items: _upzillaDropDownList.map(
+                        (val) {
+                          return DropdownMenuItem<String>(
+                            value: val,
+                            child: Column(
+                              children: <Widget>[
+                                Container(
+                                  color: kBackgroundColor,
+                                  width: MediaQuery.of(context).size.width * .9,
+                                  margin: const EdgeInsets.only(
+                                      top: 10, bottom: 5, right: 10, left: 10),
+                                  child: Text(val),
+                                ),
+                                SizedBox(
+                                  width: double.infinity,
+                                  height: 1,
+                                  child: Container(
+                                    color: Colors.black,
+                                  ),
+                                )
+                              ],
+                            ),
+                          );
+                        },
+                      ).toList(),
+                      onChanged: (val) {
+                        setState(
+                          () {
+                            _upzilla = val!;
+                          },
+                        );
+                      },
+                    ),
+                  ),
+                  Container(
+                    padding: containerPadding,
+                    margin: containerMargin,
+                    decoration: const BoxDecoration(
+                      color: kCartBackgroundColor,
+                      borderRadius: BorderRadius.only(
+                        topLeft: Radius.circular(30),
+                        bottomRight: Radius.circular(30),
+                      ),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: <Widget>[
+                        Text(
+                          _clickedNote == true ? "Note" : "",
+                          style: kSellpostsTextStyle,
+                          textAlign: TextAlign.center,
+                        ),
+                        TextField(
+                          style: kSellpostsTextStyle,
+                          keyboardType: TextInputType.text,
+                          controller: _plantNoteTextEditingController,
+                          onChanged: (value) {
+                            _note = value;
+                          },
+                          decoration: InputDecoration(
+                            hintStyle: const TextStyle(
+                              color: kTextColor,
+                              fontWeight: FontWeight.w600,
+                              fontSize: 20,
+                            ),
+                            hintText: _clickedNote == false ? 'Note' : null,
+                          ),
+                          onTap: () {
+                            setState(() {
+                              _clickedPlantName = false;
+                              _clickedPlantPrice = false;
+                              _clickedPlantAvailableItem = false;
+                              _clickedSellerHomeAddress = false;
+                              _clickedUploadDate = false;
+                              _clickedNote = true;
+                            });
+                          },
+                        ),
+                      ],
+                    ),
+                  ),
+                  if (!AddSellPost.forEditing)
+                    Center(
+                      child: Container(
+                          width: MediaQuery.of(context).size.width * .75,
+                          height: MediaQuery.of(context).size.width * .5,
+                          padding: containerPadding,
+                          margin: containerMargin,
+                          decoration: BoxDecoration(
+                            border: Border.all(color: kTextColor),
+                          ),
+                          child: _uploadedImage
+                              ? Image.file(
+                                  File(_plantImage!.path),
+                                  fit: BoxFit.fill,
+                                )
+                              : const FittedBox(
+                                  child: Icon(
+                                    Icons.photo_size_select_actual_outlined,
+                                  ),
+                                )),
+                    ),
+                  if (AddSellPost.forEditing)
+                    Center(
+                      child: Container(
+                        width: MediaQuery.of(context).size.width * .75,
+                        height: MediaQuery.of(context).size.width * .5,
+                        padding: containerPadding,
+                        margin: containerMargin,
+                        decoration: BoxDecoration(
+                          border: Border.all(color: kTextColor),
+                        ),
+                        child:
+                            Image.network(AddSellPost.sellPostsData.plantImage),
+                      ),
+                    ),
+                  Center(
+                    child: SizedBox(
+                      width: MediaQuery.of(context).size.width * .75,
+                      height: 30,
+                      child: ElevatedButton(
+                        style: ButtonStyle(
+                          backgroundColor:
+                              MaterialStateProperty.all(kCartBackgroundColor),
+                        ),
+                        onPressed: () {
+                          imagePickingAlertBox();
+                        },
+                        child: Text(
+                          AddSellPost.forEditing
+                              ? "Update image"
+                              : "Upload image",
+                          style: TextStyle(fontSize: 25, color: kTextColor),
+                        ),
+                      ),
+                    ),
+                  ),
+                  Center(
+                    child: MaterialButton(
+                      color: kPrimaryColor,
+                      onPressed: () async {
+                        setState(() {
+                          _loading = true;
+                        });
+                        List<dynamic> tempList = getDateAndTime();
+                        int _minValue = tempList[3];
+                        _date = tempList[0];
+                        _sellingID = _plantName +
+                            HomeScreen.user.userName +
+                            _minValue.toString();
+                        _sellingID = _sellingID.replaceAll(" ", "");
+                        OwnSellHistoryData ownSellHistoryData =
+                            OwnSellHistoryData();
+
+                        if (_plantName.length == 0 ||
+                            _plantPrice == -1 ||
+                            _plantAvailableItem == -1 ||
+                            _sellerHomeAddress.length == 0 ||
+                            _district.length == 0 ||
+                            _division.length == 0 ||
+                            _upzilla.length == 0 ||
+                            _note.length == 0 ||
+                            _plantImage == null) {
+                          if (_plantImage == null && AddSellPost.forEditing) {
+                            SellPostsData addsellPosts = SellPostsData(
+                              plantName: _plantName,
+                              plantID: AddSellPost.sellPostsData.plantID,
+                              plantImage: AddSellPost.sellPostsData.plantImage,
+                              date: _date,
+                              location: _sellerHomeAddress,
+                              upzilla: _upzilla,
+                              district: _district,
+                              division: _division,
+                              price: _plantPrice,
+                              note: _note,
+                              soldPlants: AddSellPost.sellPostsData.soldPlants,
+                              totalPlants: _plantAvailableItem,
+                              sellerName: HomeScreen.user.fullName,
+                              sellerID: HomeScreen.user.userName,
+                            );
+                            await ownSellHistoryData.updatePreviousSellPost(
+                                addSellPost: addsellPosts,
+                                uploadedImage: false);
+                          }
+                        } else if (AddSellPost.forEditing == false) {
+                          SellPostsData addSellPost = SellPostsData(
+                            plantName: _plantName,
+                            plantID: _sellingID,
+                            plantImage: _plantImage!.path,
+                            date: _date,
+                            location: _sellerHomeAddress,
+                            upzilla: _upzilla,
+                            district: _district,
+                            division: _division,
+                            price: _plantPrice,
+                            note: _note,
+                            soldPlants: 0,
+                            totalPlants: _plantAvailableItem,
+                            sellerName: HomeScreen.user.fullName,
+                            sellerID: HomeScreen.user.userName,
+                          );
+                          bool _isUploaded = await _plantsDataManagement
+                              .uploadPlantSellPost(addSellPost);
+                        }
+                        if (AddSellPost.forEditing && _plantImage != null) {
+                          SellPostsData sellPost = SellPostsData(
+                            plantName: _plantName,
+                            plantID: AddSellPost.sellPostsData.plantID,
+                            plantImage: _currentImage,
+                            date: _date,
+                            location: _sellerHomeAddress,
+                            upzilla: _upzilla,
+                            district: _district,
+                            division: _division,
+                            price: _plantPrice,
+                            note: _note,
+                            soldPlants: AddSellPost.sellPostsData.soldPlants,
+                            totalPlants: _plantAvailableItem,
+                            sellerName: HomeScreen.user.fullName,
+                            sellerID: HomeScreen.user.userName,
+                          );
+                          await ownSellHistoryData.updatePreviousSellPost(
+                              addSellPost: sellPost, uploadedImage: true);
+                        }
+                        Navigator.pop(context);
+                        setState(() {
+                          _loading = false;
+                        });
+                      },
+                      child: Text(
+                        AddSellPost.forEditing ? "Update" : "Upload",
+                        style: const TextStyle(
+                          color: kBackgroundColor,
+                          fontSize: 30,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            if (_loading)
+              const Center(
+                child: SpinKitFadingCircle(
+                  color: kTextColor,
+                  size: 100,
                 ),
               ),
-            ],
-          ),
+          ],
         ),
       ),
     );

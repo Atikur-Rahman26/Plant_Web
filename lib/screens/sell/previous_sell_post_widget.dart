@@ -1,8 +1,25 @@
 import 'package:flutter/material.dart';
+import 'package:plant/domain/add_sell_post_data.dart';
+import 'package:plant/screens/sell/add_sell_post/add_sell_post.dart';
 
 import '../../constants.dart';
 
 class PreviousSellPost extends StatelessWidget {
+  static SellPostsData sellPosts = SellPostsData(
+      plantName: "plantName",
+      plantID: "plantID",
+      plantImage: "plantImage",
+      date: "date",
+      location: "location",
+      upzilla: "upzilla",
+      district: "district",
+      division: "division",
+      price: 0,
+      note: "note",
+      soldPlants: 0,
+      totalPlants: 5,
+      sellerName: "sellerName",
+      sellerID: "sellerID");
   String plantImage;
   String plantName;
   String plnatId;
@@ -22,7 +39,16 @@ class PreviousSellPost extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: () {},
+      onTap: () {
+        AddSellPost.sellPostsData = sellPosts;
+        AddSellPost.forEditing = true;
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => AddSellPost(),
+          ),
+        );
+      },
       child: Container(
         height: 150,
         margin: EdgeInsets.only(bottom: 10, top: 10),

@@ -1,3 +1,4 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:plant/constants.dart';
@@ -51,192 +52,200 @@ class _LoginState extends State<Login> {
     return Scaffold(
       backgroundColor: kPrimaryColor,
       body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            Container(
-              padding: containerPadding,
-              margin: containerMargin,
-              decoration: containerBoxDecoration,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: <Widget>[
-                  Text(
-                    _clickedEmailAddress == true ? "Email" : "",
-                    style: const TextStyle(color: kTextColor, fontSize: 20),
-                    textAlign: TextAlign.center,
-                  ),
-                  TextField(
-                    style: const TextStyle(
-                      color: kTextColor,
+        child: Stack(children: <Widget>[
+          Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: <Widget>[
+              Container(
+                padding: containerPadding,
+                margin: containerMargin,
+                decoration: containerBoxDecoration,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: <Widget>[
+                    Text(
+                      _clickedEmailAddress == true ? "Email" : "",
+                      style: const TextStyle(color: kTextColor, fontSize: 20),
+                      textAlign: TextAlign.center,
                     ),
-                    keyboardType: TextInputType.emailAddress,
-                    onChanged: (value) {
-                      setState(() {
-                        emailAddress = value;
-                      });
-                    },
-                    decoration: InputDecoration(
-                      suffixIcon: _clickedEmailAddress
-                          ? null
-                          : const Icon(
-                              Icons.email_outlined,
-                              size: 30,
-                            ),
-                      suffixIconColor: kTextColor,
-                      focusColor: kPrimaryColor,
-                      hintStyle: const TextStyle(
+                    TextField(
+                      style: const TextStyle(
                         color: kTextColor,
-                        fontWeight: FontWeight.w600,
-                        fontSize: 20,
                       ),
-                      hintText: _clickedEmailAddress == false ? 'Email' : null,
-                    ),
-                    onTap: () {
-                      setState(() {
-                        _clickedEmailAddress = true;
-                        _clickedPassword = false;
-                      });
-                    },
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(
-              height: 20,
-            ),
-            Container(
-              padding: containerPadding,
-              margin: containerMargin,
-              decoration: containerBoxDecoration,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: <Widget>[
-                  Text(
-                    _clickedPassword == true ? "Password" : "",
-                    style: const TextStyle(color: kTextColor, fontSize: 20),
-                    textAlign: TextAlign.center,
-                  ),
-                  TextField(
-                    obscureText: true,
-                    style: const TextStyle(
-                      color: kTextColor,
-                    ),
-                    keyboardType: TextInputType.visiblePassword,
-                    onChanged: (value) {
-                      setState(() {
-                        password = value;
-                      });
-                    },
-                    decoration: InputDecoration(
-                      suffixIcon: _clickedPassword == false
-                          ? const Icon(
-                              Icons.password,
-                              size: 30,
-                              color: kTextColor,
-                            )
-                          : null,
-                      suffixIconColor: kTextColor,
-                      focusColor: kPrimaryColor,
-                      hintStyle: const TextStyle(
-                        color: kTextColor,
-                        fontWeight: FontWeight.w600,
-                        fontSize: 20,
-                      ),
-                      hintText: _clickedPassword == false ? 'Password' : null,
-                    ),
-                    onTap: () {
-                      setState(() {
-                        _clickedEmailAddress = false;
-                        _clickedPassword = true;
-                      });
-                    },
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(
-              height: 30,
-            ),
-            Container(
-              padding: containerPadding,
-              margin: containerMargin,
-              decoration:
-                  containerBoxDecoration.copyWith(color: kCartBackgroundColor),
-              child: TextButton(
-                onPressed: () async {
-                  setState(() {
-                    _isLoading = true;
-                  });
-                  int b = await userFunctionalities.userValid(
-                      email: emailAddress, password: password);
-                  if (b == 1) {
-                    setState(() {
-                      _isLoading = false;
-                    });
-                    users = await userDataProvider.getUserData();
-                    SharedPreferences prefs =
-                        await SharedPreferences.getInstance();
-                    await prefs?.setStringList(MyApp.userKey, <String>[
-                      '${users!.email}',
-                      '${users!.userName}',
-                      '${users!.fullName}',
-                      '${users!.userImage}',
-                      '${users!.phoneNumber}',
-                      '${users!.userDateOfBirth}'
-                    ]);
-                    await prefs?.setBool(MyApp.loginKey, true);
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => HomeScreen(
-                          users: users!,
+                      keyboardType: TextInputType.emailAddress,
+                      onChanged: (value) {
+                        setState(() {
+                          emailAddress = value;
+                        });
+                      },
+                      decoration: InputDecoration(
+                        suffixIcon: _clickedEmailAddress
+                            ? null
+                            : const Icon(
+                                Icons.email_outlined,
+                                size: 30,
+                              ),
+                        suffixIconColor: kTextColor,
+                        focusColor: kPrimaryColor,
+                        hintStyle: const TextStyle(
+                          color: kTextColor,
+                          fontWeight: FontWeight.w600,
+                          fontSize: 20,
                         ),
+                        hintText:
+                            _clickedEmailAddress == false ? 'Email' : null,
                       ),
-                    );
-                  } else if (b == 2) {
+                      onTap: () {
+                        setState(() {
+                          _clickedEmailAddress = true;
+                          _clickedPassword = false;
+                        });
+                      },
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(
+                height: 20,
+              ),
+              Container(
+                padding: containerPadding,
+                margin: containerMargin,
+                decoration: containerBoxDecoration,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: <Widget>[
+                    Text(
+                      _clickedPassword == true ? "Password" : "",
+                      style: const TextStyle(color: kTextColor, fontSize: 20),
+                      textAlign: TextAlign.center,
+                    ),
+                    TextField(
+                      obscureText: true,
+                      style: const TextStyle(
+                        color: kTextColor,
+                      ),
+                      keyboardType: TextInputType.visiblePassword,
+                      onChanged: (value) {
+                        setState(() {
+                          password = value;
+                        });
+                      },
+                      decoration: InputDecoration(
+                        suffixIcon: _clickedPassword == false
+                            ? const Icon(
+                                Icons.password,
+                                size: 30,
+                                color: kTextColor,
+                              )
+                            : null,
+                        suffixIconColor: kTextColor,
+                        focusColor: kPrimaryColor,
+                        hintStyle: const TextStyle(
+                          color: kTextColor,
+                          fontWeight: FontWeight.w600,
+                          fontSize: 20,
+                        ),
+                        hintText: _clickedPassword == false ? 'Password' : null,
+                      ),
+                      onTap: () {
+                        setState(() {
+                          _clickedEmailAddress = false;
+                          _clickedPassword = true;
+                        });
+                      },
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(
+                height: 30,
+              ),
+              Container(
+                padding: containerPadding,
+                margin: containerMargin,
+                decoration: containerBoxDecoration.copyWith(
+                    color: kCartBackgroundColor),
+                child: TextButton(
+                  onPressed: () async {
+                    setState(() {
+                      _isLoading = true;
+                    });
+                    int b = await userFunctionalities.userValid(
+                        email: emailAddress, password: password);
+                    if (b == 1) {
+                      User? user = FirebaseAuth.instance.currentUser;
+                      if (user != null && user.emailVerified) {
+                        users = await userDataProvider.getUserData();
+                        print("${users!.email} from login screen");
+                        SharedPreferences prefs =
+                            await SharedPreferences.getInstance();
+                        await prefs?.setStringList(MyApp.userKey, <String>[
+                          '${users!.email}',
+                          '${users!.userName}',
+                          '${users!.fullName}',
+                          '${users!.userImage}',
+                          '${users!.phoneNumber}',
+                          '${users!.userDateOfBirth}'
+                        ]);
+                        await prefs?.setBool(MyApp.loginKey, true);
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => HomeScreen(
+                              users: users!,
+                            ),
+                          ),
+                        );
+                      } else {
+                        print("Not verified");
+                      }
+                    } else if (b == 2) {
+                      setState(() {
+                        _isLoading = false;
+                      });
+                      print("User not found");
+                    } else if (b == 3) {
+                      setState(() {
+                        _isLoading = false;
+                      });
+                      print("wrong password");
+                    }
                     setState(() {
                       _isLoading = false;
                     });
-                    print("User not found");
-                  } else if (b == 3) {
-                    setState(() {
-                      _isLoading = false;
-                    });
-                    print("wrong password");
-                  }
+                  },
+                  child: const Text(
+                    "Log in",
+                    style: TextStyle(fontSize: 25, color: kTextColor),
+                  ),
+                ),
+              ),
+              const SizedBox(
+                height: 10,
+              ),
+              MaterialButton(
+                onPressed: () {
+                  Navigator.pushNamed(context, SignUp.id);
                 },
                 child: const Text(
-                  "Log in",
-                  style: TextStyle(fontSize: 25, color: kTextColor),
+                  "new here?sign up",
+                  style: TextStyle(
+                    color: kTextColor,
+                    fontSize: 25,
+                  ),
                 ),
               ),
-            ),
-            const SizedBox(
-              height: 10,
-            ),
-            MaterialButton(
-              onPressed: () {
-                Navigator.pushNamed(context, SignUp.id);
-              },
-              child: const Text(
-                "new here?sign up",
-                style: TextStyle(
-                  color: kTextColor,
-                  fontSize: 25,
-                ),
+            ],
+          ),
+          if (_isLoading)
+            const Center(
+              child: SpinKitFadingCircle(
+                color: kTextColor,
+                size: 100,
               ),
             ),
-            Center(
-              child: _isLoading
-                  ? const SpinKitFadingCircle(
-                      color: kTextColor,
-                      size: 100,
-                    )
-                  : null,
-            ),
-          ],
-        ),
+        ]),
       ),
     );
   }

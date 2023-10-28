@@ -5,6 +5,8 @@ import 'package:plant/domain/add_sell_post_data.dart';
 import 'package:plant/screens/details/details_screen.dart';
 import 'package:plant/screens/home/components/title_with_more_button.dart';
 
+import 'header_with_seach_box.dart';
+
 class RecommendPlants extends StatefulWidget {
   const RecommendPlants({super.key});
   @override
@@ -15,12 +17,33 @@ class _RecommendPlantsState extends State<RecommendPlants> {
   PlantsDataManagement plantsDataManagement = PlantsDataManagement();
   List<SellPostsData> recommendedData = [];
   bool _clickedMore = false;
+  String _searchText = "";
   Future<bool> assignList() async {
+    print(_searchText);
     recommendedData = await plantsDataManagement.getPlantsInfo();
+    if (_searchText.length != 0) {
+      print("debug");
+      recommendedData = recommendedData
+          .where((plant) =>
+              plant.plantName.toLowerCase().contains(_searchText.toLowerCase()))
+          .toList();
+
+      for (int i = 0; i < recommendedData.length; i++) {
+        print(recommendedData[i].plantName);
+      }
+    }
     if (recommendedData.isEmpty) {
+      print("come");
       return true;
     }
+    print("come1");
     return false;
+  }
+
+  void filterRecommendedPlants(String searchText) {
+    setState(() {
+      _searchText = searchText;
+    });
   }
 
   List<Widget> getSellPosts(bool _isItColumn) {
@@ -147,40 +170,48 @@ class _RecommendPlantsState extends State<RecommendPlants> {
 
   @override
   Widget build(BuildContext context) {
+    Size size = MediaQuery.of(context).size;
     return Column(
-      children: <Widget>[
-        TitleWithMoreButton(
-          title: 'Recommended',
-          text: _clickedMore ? 'Less' : 'More',
-          onPressed: () {
-            setState(() {
-              if (_clickedMore) {
-                _clickedMore = false;
-              } else {
-                _clickedMore = true;
-              }
-            });
-          },
+      children: [
+        HeaderWithSearchBox(
+          size: size,
+          onSearch: filterRecommendedPlants,
         ),
-        SingleChildScrollView(
-          scrollDirection: _clickedMore ? Axis.vertical : Axis.horizontal,
-          child: FutureBuilder<bool>(
-            future: assignList(),
-            builder: (context, snapshot) {
-              if (snapshot.connectionState == ConnectionState.waiting) {
-                return CircularProgressIndicator();
-              } else {
-                if (snapshot.hasError) {
-                  return Text('Error: ${snapshot.error}');
+        Column(children: <Widget>[
+          TitleWithMoreButton(
+            title: 'Recommended',
+            text: _clickedMore ? 'Less' : 'More',
+            onPressed: () {
+              setState(() {
+                if (_clickedMore) {
+                  _clickedMore = false;
                 } else {
-                  return snapshot.data == true
-                      ? CircularProgressIndicator()
-                      : getDirectedSellPosts();
+                  _clickedMore = true;
                 }
-              }
+              });
             },
           ),
-        )
+          SingleChildScrollView(
+            scrollDirection: _clickedMore ? Axis.vertical : Axis.horizontal,
+            child: FutureBuilder<bool>(
+              future: assignList(),
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  print("waiting state");
+                  return CircularProgressIndicator();
+                } else {
+                  if (snapshot.hasError) {
+                    return Text('Error: ${snapshot.error}');
+                  } else {
+                    return snapshot.data == true
+                        ? CircularProgressIndicator()
+                        : getDirectedSellPosts();
+                  }
+                }
+              },
+            ),
+          )
+        ]),
       ],
     );
   }

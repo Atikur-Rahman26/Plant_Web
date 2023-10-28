@@ -40,6 +40,7 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'Plant ',
       showSemanticsDebugger: false,
+      debugShowCheckedModeBanner: false,
       theme: ThemeData(
         scaffoldBackgroundColor: kBackgroundColor,
         primaryColor: kPrimaryColor,
@@ -55,23 +56,28 @@ class MyApp extends StatelessWidget {
             if (snapshot.hasError) {
               return Text('Error: ${snapshot.error}');
             } else {
+              late Users users;
               List<String>? strlists = preferences.getStringList(userKey);
-              String email = strlists![0];
-              String username = strlists[1];
-              String fullname = strlists[2];
-              String userImage = strlists[3];
-              String phoneNumber = strlists[4];
-              String birthDate = strlists[5];
-              HomeScreen.username = username;
 
-              Users users = Users(
-                  userDateOfBirth: birthDate,
-                  phoneNumber: phoneNumber,
-                  email: email,
-                  fullName: fullname,
-                  userName: username,
-                  userImage: userImage);
-              HomeScreen.user = users;
+              print("${snapshot.data}");
+              if (strlists != null) {
+                String email = strlists![0];
+                String username = strlists[1];
+                String fullname = strlists[2];
+                String userImage = strlists[3];
+                String phoneNumber = strlists[4];
+                String birthDate = strlists[5];
+                HomeScreen.username = username;
+
+                users = Users(
+                    userDateOfBirth: birthDate,
+                    phoneNumber: phoneNumber,
+                    email: email,
+                    fullName: fullname,
+                    userName: username,
+                    userImage: userImage);
+                HomeScreen.user = users;
+              }
               return snapshot.data == true
                   ? HomeScreen(
                       users: users,

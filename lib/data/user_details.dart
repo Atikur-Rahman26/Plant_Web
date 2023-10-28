@@ -13,10 +13,6 @@ class UserDataProvider {
   }
 
   Future<Users?> getUserData() async {
-    if (_userData != null) {
-      return _userData;
-    }
-
     final userEmail = await getUserEmail();
     if (userEmail != null) {
       final userDoc = await _firestore.collection('users').doc(userEmail).get();

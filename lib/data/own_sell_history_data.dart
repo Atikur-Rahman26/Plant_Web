@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:firebase_storage/firebase_storage.dart';
@@ -9,11 +11,22 @@ class OwnSellHistoryData {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
   Future<bool> updatePreviousSellPost(
-      {required SellPostsData addSellPost}) async {
+      {required SellPostsData addSellPost, required bool uploadedImage}) async {
+    String imageUrl = addSellPost.plantImage;
+    if (uploadedImage) {
+      String imageFileName = 'plant_images/${addSellPost.plantID}.jpg';
+      await _storageReference
+          .child(imageFileName)
+          .putFile(File(addSellPost.plantImage));
+
+      // Get the download URL of the image
+      imageUrl = await _storageReference.child(imageFileName).getDownloadURL();
+    }
+    print(addSellPost.plantID);
     try {
       await _database.child('plants/${addSellPost.plantID}').update({
         'plantID': addSellPost.plantID,
-        'plantImage': addSellPost.plantImage,
+        'plantImage': imageUrl,
         'plantName': addSellPost.plantName,
         'price': addSellPost.price,
         'note': addSellPost.note,
@@ -31,7 +44,7 @@ class OwnSellHistoryData {
           .child('ownSellPosts/${addSellPost.sellerID}/${addSellPost.plantID}')
           .update({
         'plantID': addSellPost.plantID,
-        'plantImage': addSellPost.plantImage,
+        'plantImage': imageUrl,
         'plantName': addSellPost.plantName,
         'price': addSellPost.price,
         'note': addSellPost.note,
@@ -47,7 +60,7 @@ class OwnSellHistoryData {
       });
       await _firestore.collection('plants').doc(addSellPost.plantID).update({
         'plantID': addSellPost.plantID,
-        'plantImage': addSellPost.plantImage,
+        'plantImage': imageUrl,
         'plantName': addSellPost.plantName,
         'price': addSellPost.price,
         'note': addSellPost.note,

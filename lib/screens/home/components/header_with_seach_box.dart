@@ -1,14 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:plant/constants.dart';
+import 'package:plant/screens/home/home_screen.dart';
 
 class HeaderWithSearchBox extends StatelessWidget {
-  const HeaderWithSearchBox({
+  final Function(String) onSearch;
+  final Size size;
+  HeaderWithSearchBox({
     required this.size,
+    required this.onSearch,
   });
 
-  final Size size;
-
+  TextEditingController searchingTextEditingController =
+      TextEditingController();
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -33,15 +37,34 @@ class HeaderWithSearchBox extends StatelessWidget {
             child: Row(
               children: <Widget>[
                 Text(
-                  'Hi Atikur',
+                  'Hi ${HomeScreen.user.fullName}',
                   style: Theme.of(context).textTheme.headline5?.copyWith(
                       color: Colors.white, fontWeight: FontWeight.bold),
                 ),
                 Spacer(),
-                const CircleAvatar(
-                  radius: 60.0,
-                  backgroundColor: Colors.cyan,
-                  backgroundImage: AssetImage('images/Atik.png'),
+                FutureBuilder(
+                  future: precacheImage(
+                      NetworkImage(HomeScreen.user.userImage), context),
+                  builder: (context, snapshot) {
+                    if (snapshot.connectionState == ConnectionState.waiting) {
+                      return const Center(
+                        child: Icon(
+                          Icons.person,
+                          size: 90,
+                        ),
+                      );
+                    } else if (snapshot.hasError) {
+                      return Center(
+                        child: Text('Error: ${snapshot.error}'),
+                      );
+                    } else {
+                      return CircleAvatar(
+                        backgroundImage:
+                            Image.network(HomeScreen.user.userImage).image,
+                        radius: 60,
+                      );
+                    }
+                  },
                 ),
               ],
             ),
@@ -77,10 +100,10 @@ class HeaderWithSearchBox extends StatelessWidget {
                         ),
                         enabledBorder: InputBorder.none,
                         focusedBorder: InputBorder.none,
-                        // suffixIcon: SvgPicture.asset(
-                        //   'assets/icons/search.svg'
-                        // ),
                       ),
+                      onChanged: (value) {
+                        onSearch(value);
+                      },
                     ),
                   ),
                   SvgPicture.asset('assets/icons/search.svg')

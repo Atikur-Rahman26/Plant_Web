@@ -58,6 +58,10 @@ class UserFunctionalities {
         'userImage': imageUrl, // Store the image URL
       });
 
+      bool _sentVerificationLink = await sendEmailVerification();
+      if (_sentVerificationLink == false) {
+        return null;
+      }
       return _auth.currentUser;
     } catch (e) {
       print("Error creating account: $e");
@@ -65,11 +69,60 @@ class UserFunctionalities {
     }
   }
 
+  Future<bool> updateProfile(
+      {required Users user, required bool imageChanged}) async {
+    try {
+      // Upload user image to Firestore
+      String imageUrl = user.userImage;
+      if (imageChanged) {
+        String imageFileName = 'user_images/${user.userName}.jpg';
+        await _storageReference
+            .child(imageFileName)
+            .putFile(File(user.userImage));
+
+        // Get the download URL of the image
+        imageUrl =
+            await _storageReference.child(imageFileName).getDownloadURL();
+      }
+
+      // Save user data in the Realtime Database with the image URL
+      await _database.child('users/${user.userName}').update({
+        'userName': user.userName,
+        'fullName': user.fullName,
+        'email': user.email,
+        'phoneNumber': user.phoneNumber,
+        'userDateOfBirth': user.userDateOfBirth,
+        'userImage': imageUrl, // Store the image URL
+      });
+
+      await _database
+          .child('users/usernames')
+          .update({'${user.userName}': " "});
+
+      try {
+        await _firestore.collection('users').doc(user.email).update({
+          'userName': user.userName,
+          'fullName': user.fullName,
+          'email': user.email,
+          'phoneNumber': user.phoneNumber,
+          'userDateOfBirth': user.userDateOfBirth,
+          'userImage': imageUrl,
+        });
+        print('Document updated successfully');
+      } catch (error) {
+        print('Error updating document:${error}');
+      }
+      return true;
+    } catch (e) {
+      print("Error creating account: $e");
+      return false;
+    }
+  }
+
   Future<int> userValid(
       {required String email, required String password}) async {
     int a = -1;
     try {
-      print("$email \t $password");
       final credential = await _auth.signInWithEmailAndPassword(
           email: email, password: password);
       a = 1;
@@ -93,5 +146,15 @@ class UserFunctionalities {
             }
         });
     return temp;
+  }
+
+  Future<bool> sendEmailVerification() async {
+    try {
+      User? user = FirebaseAuth.instance.currentUser;
+      await user?.sendEmailVerification();
+      return true;
+    } on FirebaseAuthException catch (e) {
+      return false;
+    }
   }
 }
